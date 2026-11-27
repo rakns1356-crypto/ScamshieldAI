@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import {
   BarChart3,
   BookOpen,
@@ -154,19 +155,25 @@ function ScamShieldWorkspace({
         : scannerTab === 'screenshot'
         ? 'Screenshot Analyzer'
         : scannerTab === 'url'
-        ? 'Real-Time URL Check'
+        ? 'Link Inspector'
         : 'Message Scanner'
       : navItems.find((n) => n.id === activeView)?.label || 'Workspace';
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col lg:flex-row">
       {/* Mobile Sidebar Backdrop */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-slate-900/40 lg:hidden"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.16 }}
+            className="fixed inset-0 z-40 bg-slate-900/40 lg:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Left Sidebar Navigation */}
       <aside
@@ -208,14 +215,25 @@ function ScamShieldWorkspace({
                     setActiveView(item.id);
                     setMobileMenuOpen(false);
                   }}
-                  className={`w-full flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors min-h-[42px] whitespace-nowrap cursor-pointer ${
+                  className={`relative w-full flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors min-h-[42px] whitespace-nowrap cursor-pointer ${
                     isActive
-                      ? 'bg-blue-50 text-blue-800 font-semibold'
+                      ? 'text-blue-800 font-semibold'
                       : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                   }`}
                 >
-                  <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-blue-700' : 'text-slate-400'}`} />
-                  <span>{item.label}</span>
+                  {isActive && (
+                    <motion.span
+                      layoutId="sidebar-nav-active"
+                      transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                      className="absolute inset-0 rounded-xl bg-blue-50"
+                    />
+                  )}
+                  <Icon
+                    className={`relative z-10 h-4 w-4 shrink-0 ${
+                      isActive ? 'text-blue-700' : 'text-slate-400'
+                    }`}
+                  />
+                  <span className="relative z-10">{item.label}</span>
                 </button>
               );
             })}
@@ -307,51 +325,61 @@ function ScamShieldWorkspace({
         {/* Main Viewport */}
         <main className="flex-1 px-4 sm:px-8 py-6 sm:py-8">
           <div className="mx-auto max-w-[1160px]">
-            {activeView === 'scanner' && (
-              <ScannerWorkspace
-                activeTab={scannerTab}
-                onTabChange={setScannerTab}
-                activeResult={activeResult}
-                onScanComplete={handleScanComplete}
-                onClearResult={() => setActiveResult(null)}
-                onAskAssistant={handleAskAssistant}
-              />
-            )}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeView}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.16, ease: 'easeOut' }}
+              >
+                {activeView === 'scanner' && (
+                  <ScannerWorkspace
+                    activeTab={scannerTab}
+                    onTabChange={setScannerTab}
+                    activeResult={activeResult}
+                    onScanComplete={handleScanComplete}
+                    onClearResult={() => setActiveResult(null)}
+                    onAskAssistant={handleAskAssistant}
+                  />
+                )}
 
-            {activeView === 'dashboard' && (
-              <PhishingDashboard
-                history={history}
-                onSelectScan={handleSelectScanFromList}
-                onStartNewScan={handleStartNewScan}
-              />
-            )}
+                {activeView === 'dashboard' && (
+                  <PhishingDashboard
+                    history={history}
+                    onSelectScan={handleSelectScanFromList}
+                    onStartNewScan={handleStartNewScan}
+                  />
+                )}
 
-            {activeView === 'history' && (
-              <HistoryVault
-                history={history}
-                vaultConfig={vaultConfig}
-                isVaultUnlocked={isVaultUnlocked}
-                onVaultConfigChange={setVaultConfig}
-                onSetVaultUnlocked={setIsVaultUnlocked}
-                onSelectScan={handleSelectScanFromList}
-                onDeleteScan={handleDeleteScan}
-                onClearAll={handleClearAll}
-              />
-            )}
+                {activeView === 'history' && (
+                  <HistoryVault
+                    history={history}
+                    vaultConfig={vaultConfig}
+                    isVaultUnlocked={isVaultUnlocked}
+                    onVaultConfigChange={setVaultConfig}
+                    onSetVaultUnlocked={setIsVaultUnlocked}
+                    onSelectScan={handleSelectScanFromList}
+                    onDeleteScan={handleDeleteScan}
+                    onClearAll={handleClearAll}
+                  />
+                )}
 
-            {activeView === 'chat' && (
-              <SafetyChatbot
-                activeScanContext={chatScanContext}
-                onClearContext={() => setChatScanContext(null)}
-              />
-            )}
+                {activeView === 'chat' && (
+                  <SafetyChatbot
+                    activeScanContext={chatScanContext}
+                    onClearContext={() => setChatScanContext(null)}
+                  />
+                )}
 
-            {activeView === 'guide' && (
-              <SafetyGuide
-                onOpenScanner={() => handleStartNewScan('message')}
-                onOpenChat={() => setActiveView('chat')}
-              />
-            )}
+                {activeView === 'guide' && (
+                  <SafetyGuide
+                    onOpenScanner={() => handleStartNewScan('message')}
+                    onOpenChat={() => setActiveView('chat')}
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </main>
       </div>
@@ -364,13 +392,15 @@ export default function App() {
   const [chatScanContext, setChatScanContext] = useState<ScanResult | null>(null);
 
   return (
-    <ToastProvider onOpenSafetyAssistant={() => setActiveView('chat')}>
-      <ScamShieldWorkspace
-        activeView={activeView}
-        setActiveView={setActiveView}
-        chatScanContext={chatScanContext}
-        setChatScanContext={setChatScanContext}
-      />
-    </ToastProvider>
+    <MotionConfig reducedMotion="user">
+      <ToastProvider onOpenSafetyAssistant={() => setActiveView('chat')}>
+        <ScamShieldWorkspace
+          activeView={activeView}
+          setActiveView={setActiveView}
+          chatScanContext={chatScanContext}
+          setChatScanContext={setChatScanContext}
+        />
+      </ToastProvider>
+    </MotionConfig>
   );
 }

@@ -180,10 +180,7 @@ export function ToastProvider({ children, onOpenSafetyAssistant }: ToastProvider
                   <div className="flex items-center gap-2 text-xs">
                     <Icon className={`h-4 w-4 shrink-0 ${iconColor}`} />
                     <span className={`font-bold ${labelColor}`}>{labelText}</span>
-                    <span aria-hidden="true" className="text-slate-400">
-                      ·
-                    </span>
-                    <span className="text-slate-600">Real-Time Protection</span>
+                    <span className="text-slate-500 font-medium">Instant Guard</span>
                   </div>
                   <button
                     type="button"

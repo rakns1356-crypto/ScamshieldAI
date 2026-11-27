@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   ExternalLink,
   FileText,
@@ -254,68 +255,90 @@ export function ScannerWorkspace({
           </p>
         </div>
 
-        {/* Segmented Scanner Mode Selector */}
+        {/* Segmented Scanner Mode Selector with Shared Layout Animation */}
         <div
           role="tablist"
           aria-label="Scanner Mode"
           className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1 self-start lg:self-auto"
         >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === 'message'}
-            onClick={() => {
-              onTabChange('message');
-              setErrorMsg(null);
-            }}
-            className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors min-h-[40px] whitespace-nowrap shrink-0 cursor-pointer ${
-              activeTab === 'message'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <FileText className="h-4 w-4" />
-            Message
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === 'screenshot'}
-            onClick={() => {
-              onTabChange('screenshot');
-              setErrorMsg(null);
-            }}
-            className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors min-h-[40px] whitespace-nowrap shrink-0 cursor-pointer ${
-              activeTab === 'screenshot'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <ImagePlus className="h-4 w-4" />
-            Screenshot
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === 'url'}
-            onClick={() => {
-              onTabChange('url');
-              setErrorMsg(null);
-            }}
-            className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors min-h-[40px] whitespace-nowrap shrink-0 cursor-pointer ${
-              activeTab === 'url'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Globe className="h-4 w-4" />
-            URL Check
-          </button>
+          {(
+            [
+              { id: 'message', label: 'Message', icon: FileText },
+              { id: 'screenshot', label: 'Screenshot', icon: ImagePlus },
+              { id: 'url', label: 'URL Check', icon: Globe },
+            ] as const
+          ).map((tab) => {
+            const Icon = tab.icon;
+            const active = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => {
+                  onTabChange(tab.id);
+                  setErrorMsg(null);
+                }}
+                className={`relative inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors min-h-[40px] whitespace-nowrap shrink-0 cursor-pointer ${
+                  active ? 'text-slate-900' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="scanner-mode-pill"
+                    transition={{ type: 'spring', stiffness: 460, damping: 34 }}
+                    className="absolute inset-0 rounded-lg bg-white shadow-xs"
+                  />
+                )}
+                <Icon className="relative z-10 h-4 w-4" />
+                <span className="relative z-10">{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Main Scanner Card */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 space-y-6">
+      {/* Main Scanner Surface */}
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 space-y-6">
+        <AnimatePresence>
+          {isLoading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.16 }}
+              className="pointer-events-none absolute inset-x-0 top-0 z-20"
+            >
+              <div className="h-1 w-full bg-blue-100 overflow-hidden">
+                <motion.div
+                  className="h-full w-1/3 bg-blue-600"
+                  animate={{ x: ['-100%', '400%'] }}
+                  transition={{ repeat: Infinity, duration: 1.35, ease: 'easeInOut' }}
+                />
+              </div>
+              <div className="bg-blue-50/95 border-b border-blue-200 px-6 py-2 flex items-center justify-between text-xs text-blue-900">
+                <span className="font-semibold">
+                  {activeTab === 'screenshot'
+                    ? 'Extracting screenshot text and inspecting patterns...'
+                    : activeTab === 'url'
+                    ? 'Checking DNS status, encryption, and phishing markers...'
+                    : 'Analyzing message phrasing and embedded links...'}
+                </span>
+                <span className="font-mono text-[11px] text-blue-700">Active Scan</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+          >
         {activeTab === 'message' && (
           <div className="space-y-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -331,13 +354,20 @@ export function ScannerWorkspace({
                     key={type}
                     type="button"
                     onClick={() => setSourceType(type)}
-                    className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    className={`relative rounded-md px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                       sourceType === type
-                        ? 'bg-white text-slate-900 shadow-xs'
+                        ? 'text-slate-900'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    {type}
+                    {sourceType === type && (
+                      <motion.span
+                        layoutId="message-source-pill"
+                        transition={{ type: 'spring', stiffness: 460, damping: 34 }}
+                        className="absolute inset-0 rounded-md bg-white shadow-xs"
+                      />
+                    )}
+                    <span className="relative z-10">{type}</span>
                   </button>
                 ))}
               </div>
@@ -528,7 +558,7 @@ export function ScannerWorkspace({
         {activeTab === 'url' && (
           <div className="space-y-5">
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Real-Time URL &amp; Phishing Link Scanner</h2>
+              <h2 className="text-lg font-bold text-slate-900">Phishing Link &amp; Domain Inspector</h2>
               <p className="text-sm text-slate-500">
                 Paste any suspicious website link. ScamShield checks DNS status, HTTPS encryption, redirects, and lookalike domain tricks without you ever opening the page.
               </p>
@@ -598,6 +628,8 @@ export function ScannerWorkspace({
             </div>
           </div>
         )}
+          </motion.div>
+        </AnimatePresence>
 
         {errorMsg && (
           <div
@@ -609,27 +641,24 @@ export function ScannerWorkspace({
         )}
       </div>
 
-      {/* Three-Step Beginner Explainer Strip */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-1.5">
-          <div className="text-xs font-semibold text-blue-700">01. Paste or Upload Safely</div>
-          <h3 className="text-sm font-bold text-slate-900">No need to click unknown links</h3>
+      {/* Unboxed Horizontal How-It-Works Strip */}
+      <div className="border-t border-slate-200 pt-6 grid gap-6 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-slate-200">
+        <div className="sm:pr-6 space-y-1">
+          <h3 className="text-sm font-bold text-slate-900">Inspect before tapping</h3>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Inspect screenshots, text messages, or URLs inside ScamShield before opening anything on your phone or browser.
+            Check suspicious texts, screenshots, or web links inside ScamShield before opening anything on your phone.
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-1.5">
-          <div className="text-xs font-semibold text-blue-700">02. See Exact Warning Signs</div>
-          <h3 className="text-sm font-bold text-slate-900">Highlighted phrases &amp; reasons</h3>
+        <div className="sm:px-6 space-y-1">
+          <h3 className="text-sm font-bold text-slate-900">Spot hidden manipulation</h3>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Every urgency trick, fake brand domain, or gift-card demand is highlighted in context with a clear explanation.
+            Every urgency trigger, lookalike domain, or gift-card demand is highlighted inline with an explanation.
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-1.5">
-          <div className="text-xs font-semibold text-blue-700">03. Follow Calm Next Steps</div>
-          <h3 className="text-sm font-bold text-slate-900">Actionable checklist &amp; recovery</h3>
+        <div className="sm:pl-6 space-y-1">
+          <h3 className="text-sm font-bold text-slate-900">Follow tailored checklists</h3>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Get step-by-step guidance on what to do next, and ask our Safety Assistant if you already clicked or replied.
+            Get step-by-step actions matched to the scam type, plus calm recovery guidance if you already replied.
           </p>
         </div>
       </div>

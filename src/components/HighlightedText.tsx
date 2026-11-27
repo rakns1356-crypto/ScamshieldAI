@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { AlertCircle } from 'lucide-react';
 import type { SuspiciousPhrase } from '../types/scam';
 
@@ -119,32 +120,40 @@ export function HighlightedText({ text, phrases }: HighlightedTextProps) {
             </p>
           </div>
 
-          {selectedPhrase && (
-            <div className="rounded-xl border border-slate-200 bg-white p-4">
-              <div className="flex items-start gap-3">
-                <AlertCircle
-                  className={`mt-0.5 h-5 w-5 shrink-0 ${
-                    selectedPhrase.severity === 'high'
-                      ? 'text-red-600'
-                      : selectedPhrase.severity === 'medium'
-                      ? 'text-amber-600'
-                      : 'text-blue-600'
-                  }`}
-                />
-                <div className="min-w-0 flex-1 space-y-1">
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                    <span className="font-semibold text-slate-900">{selectedPhrase.tactic}</span>
-                    <span aria-hidden="true">·</span>
-                    <span className="capitalize">{selectedPhrase.severity} concern</span>
+          <AnimatePresence mode="wait">
+            {selectedPhrase && (
+              <motion.div
+                key={selectedPhrase.phrase}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="rounded-xl border border-slate-200 bg-white p-4"
+              >
+                <div className="flex items-start gap-3">
+                  <AlertCircle
+                    className={`mt-0.5 h-5 w-5 shrink-0 ${
+                      selectedPhrase.severity === 'high'
+                        ? 'text-red-600'
+                        : selectedPhrase.severity === 'medium'
+                        ? 'text-amber-600'
+                        : 'text-blue-600'
+                    }`}
+                  />
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                      <span className="font-semibold text-slate-900">{selectedPhrase.tactic}</span>
+                      <span className="capitalize">{selectedPhrase.severity} concern</span>
+                    </div>
+                    <p className="font-mono text-xs text-slate-700 break-all">
+                      &ldquo;{selectedPhrase.phrase}&rdquo;
+                    </p>
+                    <p className="text-sm text-slate-700 leading-relaxed">{selectedPhrase.reason}</p>
                   </div>
-                  <p className="font-mono text-xs text-slate-700 break-all">
-                    &ldquo;{selectedPhrase.phrase}&rdquo;
-                  </p>
-                  <p className="text-sm text-slate-700 leading-relaxed">{selectedPhrase.reason}</p>
                 </div>
-              </div>
-            </div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {phrases.length > 1 && (
             <div className="grid gap-2 sm:grid-cols-2">

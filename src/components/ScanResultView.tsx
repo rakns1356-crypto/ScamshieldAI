@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   AlertTriangle,
   Check,
@@ -156,7 +157,7 @@ export function ScanResultView({ result, onAskAssistant, onScanAnother }: ScanRe
     result.channel === 'screenshot'
       ? 'Screenshot Analysis'
       : result.channel === 'url'
-      ? 'Real-Time URL Check'
+      ? 'Link Inspection'
       : 'Message Scan';
 
   const handleDownloadReport = () => {
@@ -197,22 +198,32 @@ export function ScanResultView({ result, onAskAssistant, onScanAnother }: ScanRe
   };
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.22, ease: 'easeOut' }}
+      className="space-y-6"
+    >
       {/* Primary Verdict Banner */}
       <section className={`rounded-2xl border p-6 ${riskConfig.bannerBg}`}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-4">
-            <div className="rounded-xl bg-white p-3 border border-slate-200/70 shrink-0">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+              className="rounded-xl bg-white p-3 border border-slate-200/70 shrink-0"
+            >
               <RiskIcon className={`h-7 w-7 ${riskConfig.iconColor}`} />
-            </div>
+            </motion.div>
             <div className="space-y-1.5">
-              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-slate-600">
                 <span className={`font-bold ${riskConfig.badgeText}`}>{riskConfig.label}</span>
-                <span aria-hidden="true">·</span>
+                <span className="text-slate-300" aria-hidden="true">/</span>
                 <span className="font-medium text-slate-800">{result.scamCategory}</span>
-                <span aria-hidden="true">·</span>
+                <span className="text-slate-300" aria-hidden="true">/</span>
                 <span>{channelLabel}</span>
-                <span aria-hidden="true">·</span>
+                <span className="text-slate-300" aria-hidden="true">/</span>
                 <span className="tabular-nums">{formattedTime}</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight text-balance">
@@ -225,8 +236,9 @@ export function ScanResultView({ result, onAskAssistant, onScanAnother }: ScanRe
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <button
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.97 }}
               onClick={() => setChecklistOpen(true)}
               className="inline-flex items-center gap-2 rounded-lg bg-blue-700 px-3.5 py-2 text-xs font-semibold text-white hover:bg-blue-800 transition-colors min-h-[40px] whitespace-nowrap shrink-0 cursor-pointer"
             >
@@ -235,23 +247,25 @@ export function ScanResultView({ result, onAskAssistant, onScanAnother }: ScanRe
               <span className="font-mono text-[11px] opacity-90 tabular-nums">
                 ({completedTaskCount}/{contextualTasks.length})
               </span>
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.97 }}
               onClick={handleDownloadReport}
               className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors min-h-[40px] whitespace-nowrap shrink-0 cursor-pointer"
             >
               <Download className="h-4 w-4" />
               Save Report
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.97 }}
               onClick={onScanAnother}
               className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors min-h-[40px] whitespace-nowrap shrink-0 cursor-pointer"
             >
               <RotateCcw className="h-4 w-4" />
               New Scan
-            </button>
+            </motion.button>
           </div>
         </div>
       </section>
@@ -301,14 +315,14 @@ export function ScanResultView({ result, onAskAssistant, onScanAnother }: ScanRe
             </p>
           </div>
 
-          {/* Real-Time URL Inspection Card (when a URL was scanned or found inside message/screenshot) */}
+          {/* Link & Domain Inspection */}
           {result.urlAnalysis && (
             <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
                   <Globe className="h-5 w-5 text-blue-600 shrink-0" />
                   <div>
-                    <h3 className="text-base font-bold text-slate-900">Real-Time Link Inspection</h3>
+                    <h3 className="text-base font-bold text-slate-900">Link &amp; Domain Inspection</h3>
                     <p className="text-xs text-slate-500 font-mono break-all">
                       {result.urlAnalysis.hostname}
                     </p>
@@ -379,85 +393,96 @@ export function ScanResultView({ result, onAskAssistant, onScanAnother }: ScanRe
                 </ul>
               )}
 
-              {showTechnicalUrl && (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-xs text-slate-700 space-y-1.5">
-                  <div>Normalized URL: {result.urlAnalysis.normalizedUrl}</div>
-                  <div>Protocol: {result.urlAnalysis.protocol.toUpperCase()}</div>
-                  <div>
-                    DNS Lookup: {result.urlAnalysis.dnsResolved ? `Resolved (${result.urlAnalysis.resolvedIpsCount} IPs)` : 'No public A/AAAA record'}
-                  </div>
-                  <div>HTTP Probe Status: {result.urlAnalysis.httpStatus ?? 'No response / Skipped'}</div>
-                  <div>
-                    Redirects: {result.urlAnalysis.redirected ? `Yes -> ${result.urlAnalysis.finalUrl}` : 'No redirect'}
-                  </div>
-                  <div>TLD Risk Tier: {result.urlAnalysis.tldRisk}</div>
-                </div>
-              )}
+              <AnimatePresence initial={false}>
+                {showTechnicalUrl && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.16 }}
+                    className="rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-xs text-slate-700 space-y-1.5"
+                  >
+                    <div>Normalized URL: {result.urlAnalysis.normalizedUrl}</div>
+                    <div>Protocol: {result.urlAnalysis.protocol.toUpperCase()}</div>
+                    <div>
+                      DNS Lookup: {result.urlAnalysis.dnsResolved ? `Resolved (${result.urlAnalysis.resolvedIpsCount} IPs)` : 'No public A/AAAA record'}
+                    </div>
+                    <div>HTTP Probe Status: {result.urlAnalysis.httpStatus ?? 'No response / Skipped'}</div>
+                    <div>
+                      Redirects: {result.urlAnalysis.redirected ? `Yes -> ${result.urlAnalysis.finalUrl}` : 'No redirect'}
+                    </div>
+                    <div>TLD Risk Tier: {result.urlAnalysis.tldRisk}</div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
         </div>
 
         {/* Right Column: Beginner-Friendly Action Plan */}
         <div className="lg:col-span-5 space-y-6">
-          {/* Interactive Safety Steps */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-4">
-            <div>
-              <h3 className="text-base font-bold text-slate-900">What You Should Do Next</h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Follow these simple steps one at a time
-              </p>
-            </div>
+          <div className="rounded-2xl border border-slate-200 bg-white divide-y divide-slate-200 overflow-hidden">
+            {/* Interactive Safety Steps */}
+            <div className="p-6 space-y-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">What You Should Do Next</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Follow these simple steps one at a time
+                </p>
+              </div>
 
-            <div className="space-y-2.5">
-              {result.safetySteps.map((step, idx) => {
-                const done = Boolean(checkedSteps[idx]);
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => toggleStep(idx)}
-                    className={`w-full flex items-start gap-3 rounded-xl border p-3.5 text-left transition-colors min-h-[44px] cursor-pointer ${
-                      done
-                        ? 'border-emerald-200 bg-emerald-50/60'
-                        : 'border-slate-200 bg-white hover:bg-slate-50'
-                    }`}
-                  >
-                    <span
-                      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-xs font-bold ${
+              <div className="space-y-2.5">
+                {result.safetySteps.map((step, idx) => {
+                  const done = Boolean(checkedSteps[idx]);
+                  return (
+                    <motion.button
+                      key={idx}
+                      type="button"
+                      whileTap={{ scale: 0.99 }}
+                      onClick={() => toggleStep(idx)}
+                      className={`w-full flex items-start gap-3 rounded-xl border p-3.5 text-left transition-colors min-h-[44px] cursor-pointer ${
                         done
-                          ? 'border-emerald-600 bg-emerald-600 text-white'
-                          : 'border-slate-300 bg-white text-slate-600'
+                          ? 'border-emerald-200 bg-emerald-50/60'
+                          : 'border-slate-200 bg-white hover:bg-slate-50'
                       }`}
                     >
-                      {done ? <Check className="h-3.5 w-3.5" /> : idx + 1}
-                    </span>
-                    <span
-                      className={`text-sm leading-relaxed ${
-                        done ? 'line-through text-slate-500' : 'text-slate-800'
-                      }`}
-                    >
-                      {step}
-                    </span>
-                  </button>
-                );
-              })}
+                      <span
+                        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-xs font-bold transition-colors ${
+                          done
+                            ? 'border-emerald-600 bg-emerald-600 text-white'
+                            : 'border-slate-300 bg-white text-slate-600'
+                        }`}
+                      >
+                        {done ? <Check className="h-3.5 w-3.5" /> : idx + 1}
+                      </span>
+                      <span
+                        className={`text-sm leading-relaxed ${
+                          done ? 'line-through text-slate-500' : 'text-slate-800'
+                        }`}
+                      >
+                        {step}
+                      </span>
+                    </motion.button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
 
-          {/* What NOT To Do */}
-          {result.doNotDo.length > 0 && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-3">
-              <h3 className="text-base font-bold text-slate-900">What To Avoid</h3>
-              <ul className="space-y-2.5">
-                {result.doNotDo.map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-2.5 text-sm text-slate-700">
-                    <XCircle className="h-4 w-4 text-red-600 mt-0.5 shrink-0" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+            {/* What NOT To Do */}
+            {result.doNotDo.length > 0 && (
+              <div className="p-6 space-y-3 bg-slate-50/40">
+                <h3 className="text-base font-bold text-slate-900">What To Avoid</h3>
+                <ul className="space-y-2.5">
+                  {result.doNotDo.map((item, idx) => (
+                    <li key={idx} className="flex items-start gap-2.5 text-sm text-slate-700">
+                      <XCircle className="h-4 w-4 text-red-600 mt-0.5 shrink-0" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
 
           {/* Urgent Help & Assistant CTA */}
           <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-6 space-y-4">
@@ -484,156 +509,171 @@ export function ScanResultView({ result, onAskAssistant, onScanAnother }: ScanRe
       </div>
 
       {/* Context-Aware Security Checklist Slide-Over Drawer */}
-      {checklistOpen && (
-        <div
-          className="fixed inset-0 z-50 flex justify-end bg-slate-900/40"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="security-checklist-title"
-          onClick={() => setChecklistOpen(false)}
-        >
-          <div
-            className="w-full max-w-lg bg-white h-full border-l border-slate-200 shadow-2xl flex flex-col justify-between overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
+      <AnimatePresence>
+        {checklistOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="fixed inset-0 z-50 flex justify-end bg-slate-900/40"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="security-checklist-title"
+            onClick={() => setChecklistOpen(false)}
           >
-            {/* Drawer Header */}
-            <div className="border-b border-slate-200 px-6 py-5 flex items-start justify-between gap-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <span className="font-semibold text-blue-700">Security Checklist</span>
-                  <span aria-hidden="true">·</span>
-                  <span>{result.scamCategory}</span>
-                </div>
-                <h2
-                  id="security-checklist-title"
-                  className="text-lg font-bold text-slate-900 tracking-tight"
-                >
-                  Action Plan for {result.riskLevel} Risk Finding
-                </h2>
-                <p className="text-xs text-slate-600">
-                  Tailored tasks based on this specific threat. Tap each task to mark it complete.
-                </p>
-              </div>
-              <button
-                type="button"
-                aria-label="Close Security Checklist"
-                onClick={() => setChecklistOpen(false)}
-                className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 min-h-[40px] min-w-[40px] flex items-center justify-center cursor-pointer"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Progress Bar */}
-            <div className="border-b border-slate-200 bg-slate-50 px-6 py-3 space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-slate-700">Completion Progress</span>
-                <span className="font-mono font-semibold text-slate-900 tabular-nums">
-                  {completedTaskCount} of {contextualTasks.length} completed
-                </span>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
-                <div
-                  className="h-full rounded-full bg-blue-700 transition-all duration-200"
-                  style={{
-                    width: `${
-                      contextualTasks.length > 0
-                        ? Math.round((completedTaskCount / contextualTasks.length) * 100)
-                        : 0
-                    }%`,
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Scrollable Interactive Tasks */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-3">
-              {contextualTasks.map((task) => {
-                const isDone = Boolean(completedTasks[task.id]);
-                return (
-                  <button
-                    key={task.id}
-                    type="button"
-                    onClick={() => toggleChecklistTask(task.id)}
-                    className={`w-full flex items-start gap-3.5 rounded-xl border p-4 text-left transition-colors min-h-[56px] cursor-pointer ${
-                      isDone
-                        ? 'border-emerald-200 bg-emerald-50/60'
-                        : 'border-slate-200 bg-white hover:bg-slate-50'
-                    }`}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', stiffness: 380, damping: 36 }}
+              className="w-full max-w-lg bg-white h-full border-l border-slate-200 shadow-2xl flex flex-col justify-between overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Drawer Header */}
+              <div className="border-b border-slate-200 px-6 py-5 flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <span className="font-semibold text-blue-700">Security Checklist</span>
+                    <span className="text-slate-300" aria-hidden="true">/</span>
+                    <span>{result.scamCategory}</span>
+                  </div>
+                  <h2
+                    id="security-checklist-title"
+                    className="text-lg font-bold text-slate-900 tracking-tight"
                   >
-                    <span
-                      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors ${
+                    Action Plan for {result.riskLevel} Risk Finding
+                  </h2>
+                  <p className="text-xs text-slate-600">
+                    Tailored tasks based on this specific threat. Tap each task to mark it complete.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Close Security Checklist"
+                  onClick={() => setChecklistOpen(false)}
+                  className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 min-h-[40px] min-w-[40px] flex items-center justify-center cursor-pointer"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="border-b border-slate-200 bg-slate-50 px-6 py-3 space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-slate-700">Completion Progress</span>
+                  <span className="font-mono font-semibold text-slate-900 tabular-nums">
+                    {completedTaskCount} of {contextualTasks.length} completed
+                  </span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+                  <motion.div
+                    className="h-full w-full rounded-full bg-blue-700"
+                    style={{ transformOrigin: 'left' }}
+                    initial={false}
+                    animate={{
+                      scaleX:
+                        contextualTasks.length > 0
+                          ? completedTaskCount / contextualTasks.length
+                          : 0,
+                    }}
+                    transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+                  />
+                </div>
+              </div>
+
+              {/* Scrollable Interactive Tasks */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-3">
+                {contextualTasks.map((task) => {
+                  const isDone = Boolean(completedTasks[task.id]);
+                  return (
+                    <motion.button
+                      key={task.id}
+                      type="button"
+                      whileTap={{ scale: 0.99 }}
+                      onClick={() => toggleChecklistTask(task.id)}
+                      className={`w-full flex items-start gap-3.5 rounded-xl border p-4 text-left transition-colors min-h-[56px] cursor-pointer ${
                         isDone
-                          ? 'border-emerald-600 bg-emerald-600 text-white'
-                          : 'border-slate-300 bg-white text-transparent'
+                          ? 'border-emerald-200 bg-emerald-50/60'
+                          : 'border-slate-200 bg-white hover:bg-slate-50'
                       }`}
                     >
-                      <Check className="h-3.5 w-3.5" />
-                    </span>
-
-                    <div className="flex-1 space-y-1 min-w-0">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span
-                          className={`text-sm font-bold ${
-                            isDone ? 'line-through text-slate-500' : 'text-slate-900'
-                          }`}
-                        >
-                          {task.title}
-                        </span>
-                        <span
-                          className={`text-[11px] font-semibold ${
-                            task.priority === 'Immediate' ? 'text-red-700' : 'text-slate-500'
-                          }`}
-                        >
-                          {task.priority}
-                        </span>
-                      </div>
-                      <p
-                        className={`text-xs leading-relaxed ${
-                          isDone ? 'text-slate-400' : 'text-slate-600'
+                      <motion.span
+                        animate={{ scale: isDone ? [1, 1.15, 1] : 1 }}
+                        transition={{ duration: 0.2 }}
+                        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors ${
+                          isDone
+                            ? 'border-emerald-600 bg-emerald-600 text-white'
+                            : 'border-slate-300 bg-white text-transparent'
                         }`}
                       >
-                        {task.detail}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                        <Check className="h-3.5 w-3.5" />
+                      </motion.span>
 
-            {/* Drawer Footer */}
-            <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 flex flex-wrap items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={() => setCompletedTasks({})}
-                className="text-xs font-semibold text-slate-600 hover:text-slate-900 px-2 py-1.5 cursor-pointer"
-              >
-                Reset Tasks
-              </button>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setChecklistOpen(false);
-                    onAskAssistant(result);
-                  }}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 min-h-[40px] cursor-pointer"
-                >
-                  <MessageSquare className="h-3.5 w-3.5" />
-                  Ask Assistant
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setChecklistOpen(false)}
-                  className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 min-h-[40px] cursor-pointer"
-                >
-                  Done
-                </button>
+                      <div className="flex-1 space-y-1 min-w-0">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span
+                            className={`text-sm font-bold ${
+                              isDone ? 'line-through text-slate-500' : 'text-slate-900'
+                            }`}
+                          >
+                            {task.title}
+                          </span>
+                          <span
+                            className={`text-[11px] font-semibold ${
+                              task.priority === 'Immediate' ? 'text-red-700' : 'text-slate-500'
+                            }`}
+                          >
+                            {task.priority}
+                          </span>
+                        </div>
+                        <p
+                          className={`text-xs leading-relaxed ${
+                            isDone ? 'text-slate-400' : 'text-slate-600'
+                          }`}
+                        >
+                          {task.detail}
+                        </p>
+                      </div>
+                    </motion.button>
+                  );
+                })}
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+
+              {/* Drawer Footer */}
+              <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => setCompletedTasks({})}
+                  className="text-xs font-semibold text-slate-600 hover:text-slate-900 px-2 py-1.5 cursor-pointer"
+                >
+                  Reset Tasks
+                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setChecklistOpen(false);
+                      onAskAssistant(result);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 min-h-[40px] cursor-pointer"
+                  >
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    Ask Assistant
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChecklistOpen(false)}
+                    className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 min-h-[40px] cursor-pointer"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

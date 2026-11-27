@@ -1,3 +1,4 @@
+import { motion } from 'motion/react';
 import { CheckCircle2, LifeBuoy, ShieldAlert } from 'lucide-react';
 
 interface SafetyGuideProps {
@@ -7,7 +8,12 @@ interface SafetyGuideProps {
 
 export function SafetyGuide({ onOpenScanner, onOpenChat }: SafetyGuideProps) {
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      className="space-y-6"
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
@@ -17,13 +23,14 @@ export function SafetyGuide({ onOpenScanner, onOpenChat }: SafetyGuideProps) {
             Simple, memorable rules anyone can use to spot fraud before clicking or paying.
           </p>
         </div>
-        <button
+        <motion.button
           type="button"
+          whileTap={{ scale: 0.97 }}
           onClick={onOpenScanner}
           className="rounded-xl bg-blue-700 px-4 py-2.5 text-xs font-semibold text-white hover:bg-blue-800 transition-colors min-h-[40px] whitespace-nowrap shrink-0 self-start sm:self-auto cursor-pointer"
         >
           Go to Scanner
-        </button>
+        </motion.button>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -59,7 +66,7 @@ export function SafetyGuide({ onOpenScanner, onOpenChat }: SafetyGuideProps) {
                 4
               </span>
               <span>
-                <strong className="text-slate-900">Gift cards and crypto equal scams.</strong> No real employer, government agency, or bank ever asks to be paid with gift cards.
+                <strong className="text-slate-900">Gift cards and crypto equal scams.</strong> No legitimate employer, government agency, or bank ever asks to be paid with gift cards.
               </span>
             </li>
             <li className="flex items-start gap-3">
@@ -73,11 +80,11 @@ export function SafetyGuide({ onOpenScanner, onOpenChat }: SafetyGuideProps) {
           </ol>
         </div>
 
-        <div className="space-y-6">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-3">
+        <div className="rounded-2xl border border-slate-200 bg-white divide-y divide-slate-200 overflow-hidden flex flex-col justify-between">
+          <div className="p-6 space-y-3">
             <div className="flex items-center gap-2">
               <ShieldAlert className="h-5 w-5 text-red-600" />
-              <h2 className="text-base font-bold text-slate-900">What Real Banks &amp; Agencies Never Do</h2>
+              <h2 className="text-base font-bold text-slate-900">What Official Banks &amp; Agencies Never Do</h2>
             </div>
             <ul className="space-y-2.5 text-sm text-slate-700">
               <li className="flex items-start gap-2.5">
@@ -95,7 +102,7 @@ export function SafetyGuide({ onOpenScanner, onOpenChat }: SafetyGuideProps) {
             </ul>
           </div>
 
-          <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-6 space-y-4">
+          <div className="bg-blue-50/60 p-6 space-y-4">
             <div className="flex items-start gap-3">
               <LifeBuoy className="h-5 w-5 text-blue-700 mt-0.5 shrink-0" />
               <div className="space-y-1">
@@ -105,16 +112,17 @@ export function SafetyGuide({ onOpenScanner, onOpenChat }: SafetyGuideProps) {
                 </p>
               </div>
             </div>
-            <button
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.97 }}
               onClick={onOpenChat}
               className="rounded-xl bg-blue-700 px-5 py-2.5 text-xs font-semibold text-white hover:bg-blue-800 transition-colors min-h-[42px] cursor-pointer"
             >
               Get Step-by-Step Recovery Help
-            </button>
+            </motion.button>
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

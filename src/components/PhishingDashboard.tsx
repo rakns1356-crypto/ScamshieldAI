@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
+import { motion } from 'motion/react';
 import {
   AlertTriangle,
-  ArrowUpRight,
   FileText,
   Globe,
   Image as ImageIcon,
@@ -73,7 +73,7 @@ export function PhishingDashboard({
             Phishing Detection Dashboard
           </h1>
           <p className="text-sm text-slate-600 mt-1">
-            Overview of your scanned messages, screenshots, and real-time link inspections.
+            Overview of your scanned messages, screenshots, and live link inspections.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -96,17 +96,17 @@ export function PhishingDashboard({
         </div>
       </div>
 
-      {/* KPI Strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5">
+      {/* Unified KPI Strip */}
+      <div className="rounded-2xl border border-slate-200 bg-white grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 overflow-hidden">
+        <div className="p-5">
           <span className="text-xs font-medium text-slate-500">Total Scans</span>
           <div className="mt-2 text-2xl font-bold text-slate-900 tabular-nums">{stats.total}</div>
           <p className="mt-1 text-xs text-slate-500 tabular-nums">
-            {stats.urlChecks} with URL link inspection
+            {stats.urlChecks} with link inspection
           </p>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5">
+        <div className="p-5">
           <span className="text-xs font-medium text-red-700">High Risk Threats</span>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-bold text-slate-900 tabular-nums">{stats.high}</span>
@@ -115,7 +115,7 @@ export function PhishingDashboard({
           <p className="mt-1 text-xs text-slate-500">Likely phishing or fraud</p>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5">
+        <div className="p-5">
           <span className="text-xs font-medium text-amber-700">Medium Caution</span>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-bold text-slate-900 tabular-nums">{stats.medium}</span>
@@ -124,7 +124,7 @@ export function PhishingDashboard({
           <p className="mt-1 text-xs text-slate-500">Needs verification</p>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5">
+        <div className="p-5">
           <span className="text-xs font-medium text-emerald-700">Low Risk / Safe</span>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-bold text-slate-900 tabular-nums">{stats.low}</span>
@@ -167,9 +167,12 @@ export function PhishingDashboard({
                       </span>
                     </div>
                     <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
-                      <div
+                      <motion.div
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: 1 }}
+                        transition={{ duration: 0.4, ease: 'easeOut' }}
                         className={`h-full rounded-full ${row.bar}`}
-                        style={{ width: `${pct}%` }}
+                        style={{ width: `${pct}%`, transformOrigin: 'left' }}
                       />
                     </div>
                   </div>
@@ -193,7 +196,7 @@ export function PhishingDashboard({
             </p>
           ) : (
             <div className="space-y-3 pt-1">
-              {stats.topTactics.map(([tactic, count]) => {
+              {stats.topTactics.map(([tactic, count], idx) => {
                 const widthPct = Math.max(12, Math.round((count / maxTacticCount) * 100));
                 return (
                   <div key={tactic} className="grid grid-cols-12 items-center gap-3">
@@ -202,9 +205,12 @@ export function PhishingDashboard({
                     </div>
                     <div className="col-span-5 sm:col-span-6">
                       <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
-                        <div
+                        <motion.div
+                          initial={{ scaleX: 0 }}
+                          animate={{ scaleX: 1 }}
+                          transition={{ duration: 0.35, delay: idx * 0.04, ease: 'easeOut' }}
                           className="h-full rounded-full bg-blue-600"
-                          style={{ width: `${widthPct}%` }}
+                          style={{ width: `${widthPct}%`, transformOrigin: 'left' }}
                         />
                       </div>
                     </div>
@@ -247,13 +253,20 @@ export function PhishingDashboard({
                   key={lvl}
                   type="button"
                   onClick={() => setRiskFilter(lvl)}
-                  className={`rounded-md px-2.5 py-1 text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`relative rounded-md px-2.5 py-1 text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                     riskFilter === lvl
-                      ? 'bg-white text-slate-900 shadow-xs'
+                      ? 'text-slate-900'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  {lvl}
+                  {riskFilter === lvl && (
+                    <motion.span
+                      layoutId="dashboard-risk-filter"
+                      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                      className="absolute inset-0 rounded-md bg-white shadow-xs"
+                    />
+                  )}
+                  <span className="relative z-10">{lvl}</span>
                 </button>
               ))}
             </div>
@@ -264,13 +277,20 @@ export function PhishingDashboard({
                   key={ch}
                   type="button"
                   onClick={() => setChannelFilter(ch)}
-                  className={`rounded-md px-2.5 py-1 text-xs font-semibold capitalize transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`relative rounded-md px-2.5 py-1 text-xs font-semibold capitalize transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                     channelFilter === ch
-                      ? 'bg-white text-slate-900 shadow-xs'
+                      ? 'text-slate-900'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  {ch}
+                  {channelFilter === ch && (
+                    <motion.span
+                      layoutId="dashboard-channel-filter"
+                      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                      className="absolute inset-0 rounded-md bg-white shadow-xs"
+                    />
+                  )}
+                  <span className="relative z-10">{ch}</span>
                 </button>
               ))}
             </div>
@@ -339,15 +359,16 @@ export function PhishingDashboard({
                         </div>
                       </td>
                       <td className="py-3.5 px-4 max-w-md">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-slate-900 truncate">
-                            {item.headline}
-                          </span>
-                          <ArrowUpRight className="h-3.5 w-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                        <div className="font-semibold text-slate-900 truncate group-hover:text-blue-700 transition-colors">
+                          {item.headline}
                         </div>
-                        <div className="text-xs text-slate-500 truncate mt-0.5">
-                          {item.scamCategory}
-                          {item.isSample ? ' · Example' : ''}
+                        <div className="flex items-center gap-2 text-xs text-slate-500 truncate mt-0.5">
+                          <span>{item.scamCategory}</span>
+                          {item.isSample && (
+                            <span className="text-[11px] font-medium text-slate-400">
+                              (Sample)
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="py-3.5 px-4 whitespace-nowrap text-xs text-slate-600">

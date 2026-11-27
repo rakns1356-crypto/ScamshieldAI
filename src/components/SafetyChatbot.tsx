@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { motion } from 'motion/react';
 import { Loader2, Send, ShieldCheck, User } from 'lucide-react';
 import type { ChatMessage, ScanResult } from '../types/scam';
 import { postJson } from '../utils/apiClient';
@@ -111,8 +112,11 @@ export function SafetyChatbot({ activeScanContext, onClearContext }: SafetyChatb
         {/* Chat Transcript */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
           {messages.map((msg) => (
-            <div
+            <motion.div
               key={msg.id}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
               className={`flex items-start gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
             >
               <div
@@ -137,7 +141,7 @@ export function SafetyChatbot({ activeScanContext, onClearContext }: SafetyChatb
               >
                 {msg.content}
               </div>
-            </div>
+            </motion.div>
           ))}
 
           {isSending && (
@@ -187,15 +191,16 @@ export function SafetyChatbot({ activeScanContext, onClearContext }: SafetyChatb
             placeholder="Ask a question (e.g., I gave them my email address, am I safe?)"
             className="flex-1 rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none min-h-[44px]"
           />
-          <button
+          <motion.button
             type="button"
+            whileTap={{ scale: 0.97 }}
             disabled={isSending || !input.trim()}
             onClick={() => sendMessage()}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-50 transition-colors min-h-[44px] whitespace-nowrap shrink-0 cursor-pointer"
           >
             <Send className="h-4 w-4" />
             Send
-          </button>
+          </motion.button>
         </div>
       </div>
     </div>

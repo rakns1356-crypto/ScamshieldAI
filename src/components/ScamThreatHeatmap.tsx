@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as d3 from 'd3';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   AlertTriangle,
   Compass,
   Loader2,
   MapPin,
+  Radar,
   ShieldAlert,
-  Sparkles,
   TrendingUp,
   ZoomIn,
   ZoomOut,
@@ -256,7 +257,7 @@ export function ScamThreatHeatmap({
         setTooltip({
           x: event.clientX,
           y: event.clientY,
-          title: `${reg?.name || d.regionId} · ${scam?.label || d.scamTypeId}`,
+          title: `${reg?.name || d.regionId} — ${scam?.label || d.scamTypeId}`,
           subtitle: `Primary channel: ${d.primaryChannel}`,
           intensity: getIntensity(d),
           deltaPct: d.weeklyDeltaPct,
@@ -374,7 +375,7 @@ export function ScamThreatHeatmap({
       .attr('y', height - 24)
       .attr('font-size', '11px')
       .attr('fill', '#64748b')
-      .text('★ Your selected local region · Click any cell to inspect local scam details');
+      .text('★ Your selected local region — Click any cell to inspect local scam details');
   }, [userRegion, selectedScam, timeWindow, viewMode]);
 
   // --- D3 Geographic World Threat Map Rendering ---
@@ -594,14 +595,14 @@ export function ScamThreatHeatmap({
               <MapPin className="h-3.5 w-3.5" />
               Localized Threat Radar
             </span>
-            <span aria-hidden="true">·</span>
+            <span className="text-slate-300" aria-hidden="true">/</span>
             <span>{activeRegionInfo.hubs}</span>
           </div>
           <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
             Global &amp; Regional Scam Heatmap
           </h2>
           <p className="text-sm text-slate-600">
-            See which fraud tactics are surging near you right now, and click any region or category for real examples.
+            See which fraud tactics are surging near you right now, and click any region or category for verified examples.
           </p>
         </div>
 
@@ -640,13 +641,22 @@ export function ScamThreatHeatmap({
                 key={win}
                 type="button"
                 onClick={() => setTimeWindow(win)}
-                className={`rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                className={`relative rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                   timeWindow === win
-                    ? 'bg-white text-slate-900 shadow-xs'
+                    ? 'text-slate-900'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                {win === '7d' ? 'Last 7 Days' : 'Last 30 Days'}
+                {timeWindow === win && (
+                  <motion.span
+                    layoutId="heatmap-time-pill"
+                    transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                    className="absolute inset-0 rounded-md bg-white shadow-xs"
+                  />
+                )}
+                <span className="relative z-10">
+                  {win === '7d' ? 'Last 7 Days' : 'Last 30 Days'}
+                </span>
               </button>
             ))}
           </div>
@@ -663,21 +673,28 @@ export function ScamThreatHeatmap({
                 key={mode.id}
                 type="button"
                 onClick={() => setViewMode(mode.id)}
-                className={`rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                className={`relative rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                   viewMode === mode.id
-                    ? 'bg-white text-slate-900 shadow-xs'
+                    ? 'text-slate-900'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                {mode.label}
+                {viewMode === mode.id && (
+                  <motion.span
+                    layoutId="heatmap-view-pill"
+                    transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                    className="absolute inset-0 rounded-md bg-white shadow-xs"
+                  />
+                )}
+                <span className="relative z-10">{mode.label}</span>
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Top 3 Active Threats Near User Strip */}
-      <div className="grid gap-3 md:grid-cols-3">
+      {/* Unified Segmented Active Threats Strip */}
+      <div className="rounded-xl border border-slate-200 bg-slate-50/50 divide-y md:divide-y-0 md:divide-x divide-slate-200 grid md:grid-cols-3 overflow-hidden">
         {localTopThreats.map(({ cell, scam }, idx) => {
           const isCurrent = cell.scamTypeId === selectedScam;
           const intensity = getIntensity(cell);
@@ -689,14 +706,14 @@ export function ScamThreatHeatmap({
                 setSelectedScam(scam.id);
                 setMapFilter(scam.id);
               }}
-              className={`rounded-xl border p-4 text-left transition-colors cursor-pointer ${
+              className={`p-4 text-left transition-colors cursor-pointer ${
                 isCurrent
-                  ? 'border-blue-600 bg-blue-50/60'
-                  : 'border-slate-200 bg-slate-50/70 hover:bg-slate-50'
+                  ? 'bg-blue-50/80'
+                  : 'hover:bg-white'
               }`}
             >
               <div className="flex items-center justify-between gap-2 text-xs text-slate-500">
-                <span className="font-semibold text-slate-700">
+                <span className={`font-semibold ${isCurrent ? 'text-blue-800' : 'text-slate-700'}`}>
                   #{idx + 1} Active in {activeRegionInfo.shortName}
                 </span>
                 <span className="inline-flex items-center gap-1 font-mono font-semibold text-red-700 tabular-nums">
@@ -818,13 +835,13 @@ export function ScamThreatHeatmap({
       <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-5 space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-slate-600">
               <span className="font-bold text-slate-900">{activeRegionInfo.name}</span>
-              <span aria-hidden="true">·</span>
+              <span className="text-slate-300" aria-hidden="true">/</span>
               <span className="font-semibold text-red-700">{activeScamInfo.label}</span>
-              <span aria-hidden="true">·</span>
+              <span className="text-slate-300" aria-hidden="true">/</span>
               <span>Channel: {selectedCell.primaryChannel}</span>
-              <span aria-hidden="true">·</span>
+              <span className="text-slate-300" aria-hidden="true">/</span>
               <span className="font-mono tabular-nums">
                 Activity {getIntensity(selectedCell)}/100 (+{selectedCell.weeklyDeltaPct}% this week)
               </span>
@@ -835,8 +852,9 @@ export function ScamThreatHeatmap({
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <button
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.97 }}
               disabled={advisoryLoading}
               onClick={handleFetchLocalAdvisory}
               className="inline-flex items-center gap-1.5 rounded-lg bg-blue-700 px-3.5 py-2 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-60 transition-colors min-h-[40px] whitespace-nowrap shrink-0 cursor-pointer"
@@ -848,13 +866,14 @@ export function ScamThreatHeatmap({
                 </>
               ) : (
                 <>
-                  <Sparkles className="h-3.5 w-3.5" />
+                  <Radar className="h-3.5 w-3.5" />
                   Get AI Local Advisory
                 </>
               )}
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.97 }}
               onClick={() =>
                 onTestInScanner(
                   selectedCell.primaryChannel === 'Phishing Link' ? 'url' : 'message'
@@ -863,12 +882,12 @@ export function ScamThreatHeatmap({
               className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors min-h-[40px] whitespace-nowrap shrink-0 cursor-pointer"
             >
               Scan Similar Message
-            </button>
+            </motion.button>
           </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-12">
-          <div className="lg:col-span-6 rounded-xl border border-slate-200 bg-white p-4 space-y-2">
+        <div className="rounded-xl border border-slate-200 bg-white divide-y lg:divide-y-0 lg:divide-x divide-slate-200 grid lg:grid-cols-12 overflow-hidden">
+          <div className="lg:col-span-6 p-4 space-y-2">
             <span className="text-xs font-semibold text-slate-500">
               Common Local Example
             </span>
@@ -883,7 +902,7 @@ export function ScamThreatHeatmap({
             )}
           </div>
 
-          <div className="lg:col-span-6 rounded-xl border border-slate-200 bg-white p-4 space-y-2">
+          <div className="lg:col-span-6 p-4 space-y-2">
             <span className="text-xs font-semibold text-slate-500">
               Key Local Red Flags
             </span>
@@ -898,53 +917,74 @@ export function ScamThreatHeatmap({
           </div>
         </div>
 
-        {advisoryError && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-800">
-            {advisoryError}
-          </div>
-        )}
+        <AnimatePresence>
+          {advisoryError && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-800"
+            >
+              {advisoryError}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {advisory && (
-          <div className="rounded-xl border border-blue-200 bg-white p-4 space-y-3">
-            <div className="text-xs font-bold text-blue-800">
-              AI Localized Safety Brief · {activeRegionInfo.name}
-            </div>
-            <p className="text-sm text-slate-800 leading-relaxed">{advisory.summary}</p>
-            {advisory.localSigns.length > 0 && (
-              <ul className="space-y-1.5 text-xs sm:text-sm text-slate-700">
-                {advisory.localSigns.map((sign, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <span className="font-mono font-bold text-blue-700">{idx + 1}.</span>
-                    <span>{sign}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-xs text-slate-700">
-              <strong className="text-slate-900">Where to report locally: </strong>
-              {advisory.whereToReport}
-            </div>
-          </div>
-        )}
+        <AnimatePresence>
+          {advisory && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.2 }}
+              className="rounded-xl border border-blue-200 bg-white p-4 space-y-3"
+            >
+              <div className="text-xs font-bold text-blue-800">
+                AI Localized Safety Brief — {activeRegionInfo.name}
+              </div>
+              <p className="text-sm text-slate-800 leading-relaxed">{advisory.summary}</p>
+              {advisory.localSigns.length > 0 && (
+                <ul className="space-y-1.5 text-xs sm:text-sm text-slate-700">
+                  {advisory.localSigns.map((sign, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="font-mono font-bold text-blue-700">{idx + 1}.</span>
+                      <span>{sign}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-xs text-slate-700">
+                <strong className="text-slate-900">Where to report locally: </strong>
+                {advisory.whereToReport}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Floating Interactive D3 Tooltip */}
-      {tooltip && (
-        <div
-          className="pointer-events-none fixed z-50 rounded-xl border border-slate-200 bg-slate-900 px-3.5 py-2.5 text-white shadow-lg max-w-xs"
-          style={{
-            left: Math.min(tooltip.x + 14, window.innerWidth - 260),
-            top: Math.max(tooltip.y - 76, 12),
-          }}
-        >
-          <div className="text-xs font-bold">{tooltip.title}</div>
-          <div className="text-[11px] text-slate-300 mt-0.5">{tooltip.subtitle}</div>
-          <div className="mt-1.5 flex items-center gap-3 text-[11px] font-mono tabular-nums">
-            <span>Activity: {tooltip.intensity}/100</span>
-            <span className="text-amber-300">+{tooltip.deltaPct}% wk</span>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {tooltip && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ duration: 0.12 }}
+            className="pointer-events-none fixed z-50 rounded-xl border border-slate-200 bg-slate-900 px-3.5 py-2.5 text-white shadow-lg max-w-xs"
+            style={{
+              left: Math.min(tooltip.x + 14, window.innerWidth - 260),
+              top: Math.max(tooltip.y - 76, 12),
+            }}
+          >
+            <div className="text-xs font-bold">{tooltip.title}</div>
+            <div className="text-[11px] text-slate-300 mt-0.5">{tooltip.subtitle}</div>
+            <div className="mt-1.5 flex items-center gap-3 text-[11px] font-mono tabular-nums">
+              <span>Activity: {tooltip.intensity}/100</span>
+              <span className="text-amber-300">+{tooltip.deltaPct}% wk</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
