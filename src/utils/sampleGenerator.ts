@@ -1,6 +1,7 @@
 import type { ScanResult } from '../types/scam';
+import sampleJobChatImg from '../assets/images/sample_job_scam_chat_1795708908180.jpg';
 
-export const SAMPLE_JOB_CHAT_IMAGE = '/src/assets/images/sample_job_scam_chat_1795708908180.jpg';
+export const SAMPLE_JOB_CHAT_IMAGE = sampleJobChatImg;
 
 export interface SampleMessagePreset {
   id: string;

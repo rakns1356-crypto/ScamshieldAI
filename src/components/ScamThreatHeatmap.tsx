@@ -13,6 +13,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import type { ScanChannel, ScanResult } from '../types/scam';
+import { postJson } from '../utils/apiClient';
 import {
   REGIONAL_CELLS,
   REGIONAL_HOTSPOTS,
@@ -118,20 +119,12 @@ export function ScamThreatHeatmap({
     setAdvisoryLoading(true);
     setAdvisoryError(null);
     try {
-      const res = await fetch('/api/threats/advisory', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          regionName: activeRegionInfo.name,
-          scamLabel: activeScamInfo.label,
-          localExample: selectedCell.localExample,
-        }),
+      const data = await postJson<LocalAdvisoryResponse>('/api/threats/advisory', {
+        regionName: activeRegionInfo.name,
+        scamLabel: activeScamInfo.label,
+        localExample: selectedCell.localExample,
       });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Unable to load local threat briefing.');
-      }
-      setAdvisory(data as LocalAdvisoryResponse);
+      setAdvisory(data);
     } catch (err) {
       setAdvisoryError(
         err instanceof Error ? err.message : 'Unable to fetch local advisory right now.'

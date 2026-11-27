@@ -20,6 +20,7 @@ import {
   detectHighRiskUrl,
   detectMaliciousMessagePattern,
 } from '../utils/threatPatternDetector';
+import { postJson } from '../utils/apiClient';
 import { ScanResultView } from './ScanResultView';
 import { useThreatToast } from './ToastProvider';
 
@@ -123,19 +124,11 @@ export function ScannerWorkspace({
     setErrorMsg(null);
     setIsLoading(true);
     try {
-      const res = await fetch('/api/scan/message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: content,
-          sourceType: sourceOverride ?? sourceType,
-        }),
+      const data = await postJson<ScanResult>('/api/scan/message', {
+        message: content,
+        sourceType: sourceOverride ?? sourceType,
       });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Could not analyze the message.');
-      }
-      onScanComplete(data as ScanResult);
+      onScanComplete(data);
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Something went wrong while scanning.');
     } finally {
@@ -152,16 +145,8 @@ export function ScannerWorkspace({
     setErrorMsg(null);
     setIsLoading(true);
     try {
-      const res = await fetch('/api/scan/url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: targetUrl }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Could not inspect the URL.');
-      }
-      onScanComplete(data as ScanResult);
+      const data = await postJson<ScanResult>('/api/scan/url', { url: targetUrl });
+      onScanComplete(data);
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Unable to check this link right now.');
     } finally {
@@ -226,21 +211,13 @@ export function ScannerWorkspace({
     setErrorMsg(null);
     setIsLoading(true);
     try {
-      const res = await fetch('/api/scan/screenshot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          imageBase64: screenshotDataUrl,
-          mimeType: screenshotMime,
-          contextNote: screenshotNote,
-        }),
+      const data = await postJson<ScanResult>('/api/scan/screenshot', {
+        imageBase64: screenshotDataUrl,
+        mimeType: screenshotMime,
+        contextNote: screenshotNote,
       });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Could not analyze the screenshot.');
-      }
       const scanResult: ScanResult = {
-        ...(data as ScanResult),
+        ...data,
         imagePreviewDataUrl: screenshotDataUrl,
       };
       onScanComplete(scanResult);

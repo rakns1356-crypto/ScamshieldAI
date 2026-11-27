@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Loader2, Send, ShieldCheck, User } from 'lucide-react';
 import type { ChatMessage, ScanResult } from '../types/scam';
+import { postJson } from '../utils/apiClient';
 
 interface SafetyChatbotProps {
   activeScanContext: ScanResult | null;
@@ -51,26 +52,18 @@ export function SafetyChatbot({ activeScanContext, onClearContext }: SafetyChatb
     setIsSending(true);
 
     try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
-          activeScanContext: activeScanContext
-            ? {
-                channel: activeScanContext.channel,
-                riskLevel: activeScanContext.riskLevel,
-                scamCategory: activeScanContext.scamCategory,
-                headline: activeScanContext.headline,
-                extractedText: activeScanContext.extractedText,
-              }
-            : null,
-        }),
+      const data = await postJson<{ reply: string }>('/api/chat', {
+        messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
+        activeScanContext: activeScanContext
+          ? {
+              channel: activeScanContext.channel,
+              riskLevel: activeScanContext.riskLevel,
+              scamCategory: activeScanContext.scamCategory,
+              headline: activeScanContext.headline,
+              extractedText: activeScanContext.extractedText,
+            }
+          : null,
       });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Could not reach the Safety Assistant.');
-      }
 
       const assistantMsg: ChatMessage = {
         id: `assistant_${Date.now()}`,
